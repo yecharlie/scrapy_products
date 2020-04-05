@@ -94,7 +94,7 @@ def routine(asins_path, review_asins_path, tagname, data_dir):
 
 def main(
         reserve_httpcache:("reserve the httpcache otherwise it will be cleared every time before routine started.", "flag", "r"),
-        input_json: ("a json file contains a ( list of ) dict {'asins_path', 'tagname'} ", "option") = "./ROUTINES.json",
+        input_json: ("a json file contains a ( list of ) dict {'asins_path':ASINS_PATH, 'tagname':TAGNAME, 'review_asins_path':REVIEW_ASINS_PATH}, asins_path/review_asins_path is the path of a csv file with 'asin' in its header. tagname is for organizing outputs.", "option") = "./ROUTINES.json",
         data_dir : ("which directory to store collected data", "option") = "./data"
 ):
     """ Schedule Daily Routine
