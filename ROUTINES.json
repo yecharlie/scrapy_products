@@ -1,0 +1,1 @@
+[{"asins_path": "e:/PYTHON/scrapy_products/resources/ae_products.csv", "review_asins_path":"e:/PYTHON/scrapy_products/resources/ae_asins_review.csv", "tagname": "ae"}, {"asins_path": "e:/PYTHON/scrapy_products/resources/jp_products.csv", "review_asins_path":"e:/PYTHON/scrapy_products/resources/jp_asins_review.csv", "tagname": "jp"}]
