@@ -4,12 +4,12 @@ import re
 import os.path as pth
 import logging
 
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+# from selenium.webdriver.common.by import By
+# from selenium.webdriver.support.wait import WebDriverWait
+# from selenium.webdriver.support import expected_conditions as EC
 
 from scrapy.loader import ItemLoader
-from scrapy_selenium import SeleniumRequest
+# from scrapy_selenium import SeleniumRequest
 
 from scrapy_products.spiders.basic_products import BasicProductsSpider
 from scrapy_products.spiders.amz import _AMZ_DOMAIN_TAB
@@ -25,63 +25,59 @@ _SEARCH_XPATHS = {
         "sponsored": ".//div[@data-component-type='sp-sponsored-result']"
 }
 
-class WaitProductsAjaxCompleted:
-    def __init__(self, times):
-        self.cur_times = 0
-        self.n_times = times
-        self.n_invisible = 0
-
-    def _observe_no_diff_n_times(self, driver):
-        products = driver.find_elements_by_xpath(_SEARCH_XPATHS["nested"])
-        self.n_products = len(products)
-
-        # ASINs of invisible products
-#        invisibles = {i: p.find_element_by_xpath(_SEARCH_XPATHS["asin"]).get_attribute("outerHTML") for i,p in enumerate(products) if not p.is_displayed()}
-        invisibles = [i for i,p in enumerate(products) if not p.is_displayed()]
-        self.invisibles = invisibles
-        logging.info("url={}, cur_times={}, n_invis={}".format(driver.current_url, self.cur_times, len(invisibles)))
-#        logging.info("there are {} invisible products out of total {} at page, indices are {}. the first invisible product's ASIN is {}".format(len(invisibles), len(products), invisibles.keys(), invisibles[invisibles.keys()[0]] if invisibles.keys() else None))
-        if len(invisibles) != self.n_invisible:
-            self.n_invisible = len(invisibles)
-            self.cur_times = 0
-        else:
-            self.cur_times += 1
-
-        return self.cur_times >= self.n_times
-
-
-    def __call__(self, driver):
-        return self._observe_no_diff_n_times(driver)
-
-
-class InvisibleProductsDetector:
-    def __call__(self, driver, res_meta):
-        # wait for products Ajaxs started
-        try:
-            WebDriverWait(driver, 10, 1).until_not(
-                EC.visibility_of_all_elements_located(
-                    (By.XPATH, _SEARCH_XPATHS["nested"])
-                )
-            )
-        except BaseException:
-            logging.exception("wait after 10 secs but products ajaxs operations has not been started.")
-
-        # wait for products Ajaxs completed
-        waitc = WaitProductsAjaxCompleted(2)
-        try:
-            WebDriverWait(driver, 5, 0.5).until(waitc)
-        except BaseException:
-            logging.exception("wait after 5 secs but products ajaxs operations has not been completed.")
-
-        invisibles = waitc.invisibles
-        res_meta.update(amz_search_invisibles=invisibles)
-
-        logging.info("there are {} invisible products out of total {} at page, indices are {}".format(len(invisibles), waitc.n_products, invisibles))
-#        logging.info("there are {} invisible products out of total {} at page, indices are {}. the first invisible product's ASIN is {}".format(len(invisibles), waitc.n_products, invisibles.keys(), invisibles[invisibles.keys()[0]] if invisibles.keys() else None))
-
-
-
-        
+# class WaitProductsAjaxCompleted:
+#     def __init__(self, times):
+#         self.cur_times = 0
+#         self.n_times = times
+#         self.n_invisible = 0
+# 
+#     def _observe_no_diff_n_times(self, driver):
+#         products = driver.find_elements_by_xpath(_SEARCH_XPATHS["nested"])
+#         self.n_products = len(products)
+# 
+#         # ASINs of invisible products
+# #        invisibles = {i: p.find_element_by_xpath(_SEARCH_XPATHS["asin"]).get_attribute("outerHTML") for i,p in enumerate(products) if not p.is_displayed()}
+#         invisibles = [i for i,p in enumerate(products) if not p.is_displayed()]
+#         self.invisibles = invisibles
+#         logging.info("url={}, cur_times={}, n_invis={}".format(driver.current_url, self.cur_times, len(invisibles)))
+# #        logging.info("there are {} invisible products out of total {} at page, indices are {}. the first invisible product's ASIN is {}".format(len(invisibles), len(products), invisibles.keys(), invisibles[invisibles.keys()[0]] if invisibles.keys() else None))
+#         if len(invisibles) != self.n_invisible:
+#             self.n_invisible = len(invisibles)
+#             self.cur_times = 0
+#         else:
+#             self.cur_times += 1
+# 
+#         return self.cur_times >= self.n_times
+# 
+# 
+#     def __call__(self, driver):
+#         return self._observe_no_diff_n_times(driver)
+# 
+# 
+# class InvisibleProductsDetector:
+#     def __call__(self, driver, res_meta):
+#         # wait for products Ajaxs started
+#         try:
+#             WebDriverWait(driver, 10, 1).until_not(
+#                 EC.visibility_of_all_elements_located(
+#                     (By.XPATH, _SEARCH_XPATHS["nested"])
+#                 )
+#             )
+#         except BaseException:
+#             logging.exception("wait after 10 secs but products ajaxs operations has not been started.")
+# 
+#         # wait for products Ajaxs completed
+#         waitc = WaitProductsAjaxCompleted(2)
+#         try:
+#             WebDriverWait(driver, 5, 0.5).until(waitc)
+#         except BaseException:
+#             logging.exception("wait after 5 secs but products ajaxs operations has not been completed.")
+# 
+#         invisibles = waitc.invisibles
+#         res_meta.update(amz_search_invisibles=invisibles)
+# 
+#         logging.info("there are {} invisible products out of total {} at page, indices are {}".format(len(invisibles), waitc.n_products, invisibles))
+# #        logging.info("there are {} invisible products out of total {} at page, indices are {}. the first invisible product's ASIN is {}".format(len(invisibles), waitc.n_products, invisibles.keys(), invisibles[invisibles.keys()[0]] if invisibles.keys() else None))
 
 
 class AmzSearchIter(CSVPagesIter):
@@ -112,14 +108,14 @@ class AmzSearchIter(CSVPagesIter):
             yield wp
         
 
-
 class AmzSearchIndsSpider(BasicProductsSpider):
     name = 'amz_search_inds'
 #    Request = SeleniumRequest
 
     custom_settings = {
             "DEFAULT_REQUEST_HEADERS": {
-                'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36'
+#                'User-Agent':'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:75.0) Gecko/20100101 Firefox/75.0'
+                'User-Agent':'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36'
             },
 #            "CONCURRENT_REQUESTS" : 1,
 #            "DOWNLOAD_DELAY":6
@@ -166,17 +162,21 @@ class AmzSearchIndsSpider(BasicProductsSpider):
         for aux in webpage.auxiliaries:
             if asin == aux["asin"]:
                 return aux["asin"]
-            elif "title" in aux:
-                nprefix = len(title) * 4 // 5
+            elif "title" in aux and aux["title"]:
+                nprefix = len(aux["title"]) * 4 // 5
 
                 # compaare prefix of title, title may be appended with different color information, in case
+#                self.logger.debug("url={} aux = {}\n src:title={}\ndst:title={}".format(webpage.url, aux, aux["title"][:nprefix], title[:nprefix]))
                 if title[:nprefix] == aux["title"][:nprefix]:
                     return aux["asin"]
         return
 
 
     def filter_product_hook(self, product, webpage, meta, **locators):
-#        self.logger.debug("Product: title={}, asin={} sponsored={}".format(product["title"], product["matched_asin"], product["sponsored"]))
+#        if locators["index"] <= 6:
+#            self.logger.debug("[{}] Product: title={}, asin={} sponsored={}".format(locators["index"], product["title"], product["matched_asin"], product["sponsored"]))
+#        else:
+#            return
 
         # ignored
         if product["sponsored"]:
