@@ -31,11 +31,17 @@ def generate_cases_keywords(titles_csv, brandsl=None, out_csv=None):
 
     # extract keywords from the title 
     for r in rows:
-        r.update(keywords=simple_extract(
-            title=r["title"],
-            brandsl=brandsl,
-            typecode=hp.lookup(r["domain"], "typecode")
-        )) 
+        if r["domain"] not in hp.keys or not hp.lookup(r["domain"], "typecode"):
+            # unsupported station, then keywords should be set manually as inputs
+            kw = ""
+        else:
+            kw = simple_extract(
+                title=r["title"],
+                brandsl=brandsl,
+                typecode=hp.lookup(r["domain"], "typecode")
+            )
+            kw = kw if kw else ""
+        r.update(keywords=kw) 
     fieldnames.append("keywords")
 
     out_csv = out_csv if out_csv else titles_csv
@@ -56,7 +62,12 @@ def clear_httpcache():
     os.system("rm -rf .scrapy/httpcache")
 
 
-def routine(asins_path, review_asins_path, tagname, data_dir):
+def routine(
+    asins_path,
+    review_asins_path,
+    tagname,
+    data_dir
+):
     # create a subdirectory based on date
     today_str = datetime.date.today().strftime("%m%d")
     subdir = pth.join(data_dir, today_str)
@@ -68,8 +79,11 @@ def routine(asins_path, review_asins_path, tagname, data_dir):
     )
     crawl_listings(asins_path, listings_path)
 
-    # generate kwywords and write back
+    # generate keywords and write back
     generate_cases_keywords(listings_path)
+
+    # sometimes inputs contains instructions of what keywords should be used for a product, so we merge these keywords and set inputs keywords with higher priority
+    parse_csv.merge_csv("asin", listings_path, asins_path, listings_path)
 
     # search indices
     indices_path = pth.join(
@@ -78,12 +92,12 @@ def routine(asins_path, review_asins_path, tagname, data_dir):
     )
     crawl_indicse(listings_path, indices_path)
 
-    # merge files from asins_path, listings_path, indices_path
+    # merge files from (asins_path), listings_path, indices_path
     routine_path = pth.join(
         subdir,
         "{}_routine.csv".format(tagname)
     )
-    parse_csv.merge_csv("asin", routine_path, asins_path, listings_path, indices_path)
+    parse_csv.merge_csv("asin", routine_path, listings_path, indices_path)
 
     # get latesst reviews
     reviews_path = pth.join(
@@ -110,7 +124,8 @@ def main(
             inps = [inps]
 
         for di in inps:
-            asins_path, review_asins_path, tagname = di["asins_path"], di["review_asins_path"], di["tagname"]
+            asins_path, tagname = di["asins_path"], di["tagname"]
+            review_asins_path = di["review_asins_path"] if "review_asins_path" in di else asins_path
 
             # schedule funcility reserved
             schedule.every().day.at("03:00").do(run_threaded, routine, asins_path, review_asins_path, tagname, data_dir)
