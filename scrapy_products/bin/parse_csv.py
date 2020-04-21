@@ -2,7 +2,9 @@ import csv
 import sys
 import copy
 import argparse
+import logging
 
+_logger = logging.getLogger(__name__)
 
 def read_csv(path,*fields, rows_with_fieldnames=True):
     """ Read CSV As a Whole
@@ -39,8 +41,7 @@ def merge_by(
     fieldnames1,
     dreader2,
     fieldnames2,
-    key,
-    **kwargs
+    key
 ):
     """ Merge two csv files
     """
@@ -48,44 +49,63 @@ def merge_by(
     if key not in fieldnames1 or key not in fieldnames2:
         raise ValueError("Invalid key:{}".formqat(key))
 
+
     # Note: nrows of merged csv = nrows of dreader1
     merged = { r1[key]:r1 for r1 in dreader1 }
 
     # fieldnames appended to fieldnames1 list
     # preference with same fieldname: dreader1 > dreader2
 #    print("fn1=",fieldnames1,"fn2=",fieldnames2)
-    appdfn = [f2 for f2 in fieldnames2 if f2 not in fieldnames1]
+#    appdfn = [f2 for f2 in fieldnames2 if f2 not in fieldnames1]
 #    print("APPDFN=",appdfn)
     for r2 in dreader2:
         if r2[key] in merged: # shared key
             r1 = merged[r2[key]]
-            r3 = copy.deepcopy(r1)
-            for fn in appdfn: # append new fields
-                if fn in r3:
-                    raise ValueError("Duplicately set field {} at key {} ".format(fn, r2[key]))
-                else:
-                    r3[fn] = r2[fn]
-        
-            for fn, functor in kwargs.items(): # fieldnames 
-                r3[fn] = functor(r1, r2)
 
-            merged[r2[key]] = r3 # update 
-            del r1
+            for k,v in r2.items():
+                if k not in r1 or not r1[k]:
+                    r1[k] = v # update
+
+#            r3 = copy.deepcopy(r1)
+#
+#            for fn in appdfn: # append new fields
+#                if fn in r3:
+#                    raise ValueError("Duplicately set field {} at key {} ".format(fn, r2[key]))
+#                else:
+#                    r3[fn] = r2[fn]
+#        
+#            for fn, functor in kwargs.items(): # fieldnames 
+#                r3[fn] = functor(r1, r2)
+#
+#            merged[r2[key]] = r3 # update 
+#            del r1
 
     # no need for the key
-    merged = [v for k,v in merged.items()]
-    fieldnames3 = fieldnames1 + appdfn
+#    merged = [v for k,v in merged.items()]
+#    fieldnames3 = fieldnames1 + appdfn
+#
+#    return merged, fieldnames3
+    merged = list(merged.values())
+    fieldnames3 = fieldnames1 + [ fn for fn in fieldnames2 if fn not in fieldnames1]
+#    print(fieldnames3)
 
     return merged, fieldnames3
+    
 
 
 def merge_csv(key, out_pth, csv_path1, csv_path2, *pths):
-    first, fn1 = read_csv(csv_path1)
-    second, fn2 = read_csv(csv_path2)
+    def read_with_check(csv_path, key):
+        rows, fns = read_csv(csv_path)
+        if not len(set([ r[key] for r in rows])) == len(rows):
+            _logger.warn("duplicated keys in {}".format(csv_path))
+        return rows, fns
+
+    first, fn1 = read_with_check(csv_path1, key)
+    second, fn2 = read_with_check(csv_path2, key)
     remain = list(pths)
     while first and second:
         first, fn1 = merge_by(first, fn1, second, fn2, key)
-        second, fn2 = read_csv(remain.pop(0)) if remain else ([], [])
+        second, fn2 = read_with_check(remain.pop(0), key) if remain else ([], [])
 
     write_csv(out_pth, first, fn1)
 
