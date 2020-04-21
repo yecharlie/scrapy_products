@@ -16,7 +16,9 @@ _BRANDS=[
 "Xiaomi",
 "OnePlus",
 "1+",
-"OPPO"
+"OPPO",
+"Pixel",
+"Google"
 ]
 
 def simple_extract(
@@ -44,4 +46,3 @@ def simple_extract(
             return kw
 
     _logger.debug("fail to generate keywords for\n\t{}".format(tt))
-    return kw
