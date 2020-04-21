@@ -15,7 +15,8 @@ from scrapy_products.utils import (
 )
 import scrapy_products.utils.padding_dict as padding_dict 
 
-# tested on limited categories
+# WARNING: all the layouts are tested on limited categories
+
 _JP_LISTINGS_XPATHS = {
         "title" : "//h1[@id='title']/span/text()",
         "broad_bsr" : "//tr[@id='SalesRank']/td[@class='value']/text()[1]",
@@ -24,7 +25,6 @@ _JP_LISTINGS_XPATHS = {
         "nratings" : "//div[contains(@class, 'averageStarRatingNumerical')]/span/text()"
 }
 
-# tested on limited categories
 _AE_LISTINGS_XPATHS = {
         "title" : "//h1[@id='title']/span/text()",
         "broad_bsr" :  "//li[@id='SalesRank']/text()[2]",
@@ -36,7 +36,30 @@ _AE_LISTINGS_XPATHS = {
 _AE_LISTINGS_XPATHS2 = {
         "broad_bsr" : "//tr[@id='SalesRank']/td[@class='value']/text()[1]",
         "narrow_bsr" : "//tr[@id='SalesRank']//span[@class='zg_hrsr_rank']/text()",
+}
 
+_US_LISTINGS_XPATHS = {
+        "title" : "//h1[@id='title']/span/text()",
+        "broad_bsr" : "//tr[contains(th/text(), 'Best Sellers Rank')]/td/span/span[1]/text()",
+        "narrow_bsr" : "//tr[contains(th/text(), 'Best Sellers Rank')]/td/span/span[2]/text()",
+        "ratings" : "//tr[contains(th/text(), 'Customer Reviews')]/td/text()",
+        "nratings" : "//tr[contains(th/text(), 'Customer Reviews')]/td//span[@id='acrCustomerReviewText']/text()"
+}
+
+_DE_LISTINGS_XPATH = {
+        "title" : "//h1[@id='title']/span/text()",
+        "broad_bsr" :  "//li[@id='SalesRank']/text()[1]",
+        "narrow_bsr" : "//li[@id='SalesRank']//span[@class='zg_hrsr_rank']/text()",
+        "ratings":"//span[@data-hook='rating-out-of-text']/text()",
+        "nratings":"//div[@data-hook='total-review-count']/span/text()"
+}
+
+_IT_LISTINGS_XPATH = {
+        "title" : "//h1[@id='title']/span/text()",
+        "broad_bsr":"//tr[@id='SalesRank']//td[2]/text()[1]",
+        "narrow_bsr":"//tr[@id='SalesRank']//span[@class='zg_hrsr_rank']/text()",
+        "ratings":"//span[@data-hook='rating-out-of-text']/text()",
+        "nratings":"//div[@data-hook='total-review-count']/span/text()"
 }
 
 class AmzListingsIter(CSVPagesIter):
@@ -55,10 +78,11 @@ class AmzListingsSpider(BasicProductsSpider):
     follow_link_from = None
     custom_settings = {
             "DEFAULT_REQUEST_HEADERS": {
-                'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36'
+#                'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36'
+                'User-Agent':'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:75.0) Gecko/20100101 Firefox/75.0'
             },
 #            "CONCURRENT_REQUESTS" : 1,
-#            "DOWNLOAD_DELAY":6
+            "DOWNLOAD_DELAY":3
     }
 
 
@@ -80,6 +104,12 @@ class AmzListingsSpider(BasicProductsSpider):
             _LISTINGS_XPATH_LIST = [_JP_LISTINGS_XPATHS]
         elif webpage.auxiliaries[0]["domain"] == "amazon.ae":
             _LISTINGS_XPATH_LIST = padding_dict.pad(_AE_LISTINGS_XPATHS, _AE_LISTINGS_XPATHS2) 
+        elif webpage.auxiliaries[0]["domain"] == "amazon.com":
+            _LISTINGS_XPATH_LIST = [_US_LISTINGS_XPATHS]
+        elif webpage.auxiliaries[0]["domain"] == "amazon.de":
+            _LISTINGS_XPATH_LIST = [_DE_LISTINGS_XPATH]
+        elif webpage.auxiliaries[0]["domain"] == "amazon.it":
+            _LISTINGS_XPATH_LIST = [_IT_LISTINGS_XPATH]
         else:
             raise NotImplementedError("{}: currently not supported!".format(webpage.auxiliaries[0]["domain"]))
 
@@ -101,9 +131,3 @@ class AmzListingsSpider(BasicProductsSpider):
         ch_loader = ChainedLoader.chain(*loaders_list)
         ch_loader.set_united_item(fields)
         return ch_loader
-
-
-
-
-
-
