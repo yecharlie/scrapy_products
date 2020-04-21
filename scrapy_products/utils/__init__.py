@@ -66,4 +66,4 @@ class TableHelper:
 
     @property        
     def keys(self):
-        return key_map.keys()
+        return self.key_map.keys()
