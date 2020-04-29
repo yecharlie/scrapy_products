@@ -13,9 +13,9 @@
 
 - 已支持的站点：美、日、德、意、中东。
 - 获取特定商品的信息，包括：标题、评级（Rating）、评级数、BSR、搜索排名（Organic Rank）。
-- 待搜索的商品列表存放在csv文件中，第一行头包括：domain,asin,keywords,[sku]，sku可选，支持同时输入多个csv文件。见auto.py。其中一行可以是：
+- 待搜索的商品列表存放在csv文件中，第一行为行头，包括字段名：domain,asin,[sku],keywords，其中sku可选，余下每一行表示一个商品，支持同时输入多个csv文件。见auto.py。某个商品表示为：
     ```
-    amazon.it,B071DBXXXX,myproduct,product xxx kw
+    amazon.it,B071DBXXXX,myproductA,product A search kw
     ```
 - 在搜索结果里查找时，同一种商品的不同变种（比如红色和绿色）可以自动识别出来，只要其标题的前面部分是一致的，
 - 提供一组工具类：BasicProductsSpider、ChainedLoader、CSVPagesIter等，封装了基于Scrapy的翻页查找类应用的通用业务逻辑，用户可根据API开发定制化业务，上述亚马逊业务可视为其应用示例。
